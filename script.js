@@ -1,152 +1,62 @@
-// Tab switching functionality
-document.querySelectorAll('.tab-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        // Remove active class from all buttons and forms
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-        
-        // Add active class to clicked button and corresponding form
-        button.classList.add('active');
-        const tab = button.dataset.tab;
-        document.getElementById(tab + 'Form').classList.add('active');
-    });
-});
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyDd3EaTYm1DhLPRxNJTe5Z-YI_e_3WrBOY",
+    authDomain: "pro-ab755.firebaseapp.com",
+    projectId: "pro-ab755",
+    storageBucket: "pro-ab755.firebasestorage.app",
+    messagingSenderId: "44360529590",
+    appId: "1:44360529590:web:eca4a6ec0d9d448e831817",
+    measurementId: "G-HF5FW5L9KM"
+};
 
-// Password visibility toggle
-document.querySelectorAll('.toggle-password').forEach(button => {
-    button.addEventListener('click', () => {
-        const input = button.previousElementSibling;
-        const icon = button.querySelector('i');
-        
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        }
-    });
-});
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
 
-// Password strength checker
-const passwordInput = document.getElementById('registerPassword');
-const strengthFill = document.querySelector('.strength-fill');
-const strengthText = document.querySelector('.strength-text');
+// Google Auth Provider
+const provider = new firebase.auth.GoogleAuthProvider();
 
-if (passwordInput) {
-    passwordInput.addEventListener('input', () => {
-        const password = passwordInput.value;
-        let strength = 0;
-        
-        if (password.length >= 8) strength += 25;
-        if (password.match(/[a-z]/)) strength += 25;
-        if (password.match(/[A-Z]/)) strength += 25;
-        if (password.match(/[0-9]/)) strength += 25;
-        
-        strengthFill.style.width = strength + '%';
-        
-        if (strength < 50) {
-            strengthFill.style.backgroundColor = '#e74c3c';
-            strengthText.textContent = 'Weak password';
-        } else if (strength < 75) {
-            strengthFill.style.backgroundColor = '#f39c12';
-            strengthText.textContent = 'Medium password';
-        } else {
-            strengthFill.style.backgroundColor = '#27ae60';
-            strengthText.textContent = 'Strong password';
-        }
-    });
-}
+// DOM Elements
+const googleSignInBtn = document.getElementById('googleSignIn');
+const loginForm = document.getElementById('loginForm');
 
-// Form validation
-function validateForm(form) {
-    const inputs = form.querySelectorAll('input[required], select[required]');
-    let isValid = true;
-    
-    inputs.forEach(input => {
-        const errorMessage = input.parentElement.nextElementSibling;
-        
-        if (!input.value.trim()) {
-            errorMessage.textContent = 'This field is required';
-            isValid = false;
-        } else if (input.type === 'email' && !input.value.match(/^[\w.-]+@[\w.-]+\.\w+$/)) {
-            errorMessage.textContent = 'Please enter a valid email';
-            isValid = false;
-        } else {
-            errorMessage.textContent = '';
-        }
-    });
-    
-    // Password confirmation validation
-    const password = form.querySelector('#registerPassword');
-    const confirmPassword = form.querySelector('#confirmPassword');
-    
-    if (password && confirmPassword && password.value !== confirmPassword.value) {
-        confirmPassword.parentElement.nextElementSibling.textContent = 'Passwords do not match';
-        isValid = false;
-    }
-    
-    return isValid;
-}
-
-// Login form submission
-document.getElementById('loginForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    if (validateForm(e.target)) {
-        const submitBtn = e.target.querySelector('.btn-primary');
-        const originalText = submitBtn.innerHTML;
-        
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
-        submitBtn.disabled = true;
-        
-        // Simulate API call
-        setTimeout(() => {
-            alert('Login successful! Welcome back.');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        }, 1500);
+// Google Sign In
+googleSignInBtn.addEventListener('click', async () => {
+    try {
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
+        console.log('Google sign-in successful:', user);
+        alert('Welcome ' + user.displayName + '!');
+        // Redirect or update UI as needed
+    } catch (error) {
+        console.error('Google sign-in error:', error);
+        alert('Sign-in failed: ' + error.message);
     }
 });
 
-// Register form submission
-document.getElementById('registerForm').addEventListener('submit', (e) => {
+// Email/Password Sign In
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    if (validateForm(e.target)) {
-        const submitBtn = e.target.querySelector('.btn-primary');
-        const originalText = submitBtn.innerHTML;
-        
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
-        submitBtn.disabled = true;
-        
-        // Simulate API call
-        setTimeout(() => {
-            alert('Account created successfully! Please check your email to verify.');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            
-            // Switch to login tab
-            document.querySelector('[data-tab="login"]').click();
-        }, 1500);
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        const result = await firebase.auth().signInWithEmailAndPassword(email, password);
+        console.log('Email sign-in successful:', result.user);
+        alert('Welcome back!');
+        // Redirect or update UI as needed
+    } catch (error) {
+        console.error('Email sign-in error:', error);
+        alert('Sign-in failed: ' + error.message);
     }
 });
 
-// Social login buttons
-document.querySelectorAll('.social-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        const platform = button.classList.contains('google') ? 'Google' : 'Facebook';
-        alert(`Redirecting to ${platform} authentication...`);
-    });
-});
-
-// Forgot password
-document.querySelector('.forgot-password').addEventListener('click', (e) => {
-    e.preventDefault();
-    const email = prompt('Enter your email address:');
-    if (email) {
-        alert('Password reset link sent to your email!');
+// Auth state listener
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        console.log('User is signed in:', user);
+        // User is signed in, redirect to dashboard or update UI
+    } else {
+        console.log('User is signed out');
     }
 });
